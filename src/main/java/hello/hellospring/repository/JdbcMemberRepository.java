@@ -1,7 +1,6 @@
 package hello.hellospring.repository;
 
 import hello.hellospring.domain.Member;
-import jdk.jshell.spi.ExecutionControlProvider;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import javax.sql.DataSource;
@@ -9,8 +8,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static java.sql.DriverManager.getConnection;
 
 public class JdbcMemberRepository implements MemberRepository{
 
@@ -30,7 +27,7 @@ public class JdbcMemberRepository implements MemberRepository{
         ResultSet rs = null;
 
         try{
-            conn = pstmt.getConnection();
+            conn = getConnection();
             pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             pstmt.setString(1, member.getName());
@@ -40,14 +37,13 @@ public class JdbcMemberRepository implements MemberRepository{
 
             if(rs.next()){
                 member.setId(rs.getLong(1));
+                conn.commit();
             } else{
                 throw new SQLException("id 조회 실패");
             }
             return member;
         } catch(Exception e){
             throw new IllegalStateException(e);
-        } finally{
-            close(conn, pstmt, rs);
         }
     }
 
@@ -76,8 +72,6 @@ public class JdbcMemberRepository implements MemberRepository{
             }
         } catch(Exception e){
             throw new IllegalStateException(e);
-        } finally {
-            close(conn, pstmt, rs);
         }
     }
 
@@ -106,8 +100,6 @@ public class JdbcMemberRepository implements MemberRepository{
             }
         } catch(Exception e){
             throw new IllegalStateException(e);
-        } finally {
-            close(conn, pstmt, rs);
         }
     }
 
@@ -134,8 +126,6 @@ public class JdbcMemberRepository implements MemberRepository{
             return members;
         } catch(Exception e){
             throw new IllegalStateException(e);
-        } finally{
-            close(conn, pstmt, rs);
         }
     }
 
@@ -143,7 +133,7 @@ public class JdbcMemberRepository implements MemberRepository{
         return DataSourceUtils.getConnection(dataSource);
     }
 
-    private void close(Connection conn, PreparedStatement pstmt, ResultSet rs){
+    private void close(ResultSet rs, PreparedStatement pstmt, Connection conn){
         try{
             if(rs != null) {
                 rs.close();

@@ -5,11 +5,14 @@ import hello.hellospring.repository.MemberRepository;
 import hello.hellospring.repository.MemoryMemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 
+@Transactional
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -22,11 +25,18 @@ public class MemberService {
     // 회원가입
     public long join(Member member){
 
-        // 중복 아이디 확인
-        validateDuplicateMember(member);
+        long start= System.currentTimeMillis();
 
-        memberRepository.save(member);
-        return member.getId();
+        // 중복 아이디 확인
+        try{
+            validateDuplicateMember(member);
+            memberRepository.save(member);
+            return member.getId();
+        } finally {
+            long finish = System.currentTimeMillis();
+            long timeMs = finish - start;
+            System.out.println("join = " + timeMs + "ms");
+        }
     }
 
     // 아이디 중복 확인
@@ -38,7 +48,7 @@ public class MemberService {
     }
 
     // 전체 회원 조회
-    public List<Member> findMembers(){
+    public List<Member> findMembers() {
         return memberRepository.findAll();
     }
 
